@@ -20,30 +20,28 @@ This is the Pytorch implementation for [Disentangling Instructive Information fr
 
 4. Obtain the ROUGE ranking results of these summary candidates.
 
-5. Train a candidates reranker based on the folder `candidate_reranker`
-## Training the reranker model
+## Training the candidates reranker model based on the folder `candidate_reranker`
 ```bash
 export PYTHONPATH=.
 
 python train.py  --mode train --cuda  --data_dir <path-to-training-dataset-folder>  --batch_size 1 --seed 666 --train_steps 26000 --warmup_steps 4000 --save_checkpoint_steps 2000  --report_every 1  --visible_gpus 0 --gpu_ranks 0  --world_size 1 --accum_count 8 --dec_dropout 0.2 --enc_dropout 0.1  --model_path  ./trained_model/train_promptctr  --log_file ./log/train_source.txt  --inter_layers 6,7 --inter_heads 6 --dec_hidden_size 768 --hier --doc_max_timesteps 50 --use_bert true --prop 3  --num_workers 5 --lr 0.001 --enc_layers 6  --dec_layers 6 --use_nucleus_sampling false --label_smoothing 0.1 
 ```
 
-## Predict on the test set
+## Predict the ranking results of the test set
 ```bash
 export PYTHONPATH=.
 
 python train.py  --mode test --cuda  --data_dir <path-to-test-dataset-folder> --batch_size 8 --valid_batch_size 8 --seed 666   --visible_gpus 0 --gpu_ranks 0 --dec_dropout 0.2 --enc_dropout 0.1  --lr 0.2 --label_smoothing 0.1  --log_file ./log/log_full_test_wordlevel_copy001.txt  --inter_layers 6,7 --inter_heads 6 --dec_hidden_size 768 --doc_max_timesteps 50 --use_bert true --report_rouge --alpha 0.4 --max_length 200 --result_path ./resultmx/prompt_ctr_ --prop 3 --test_all false --sep_optim true --use_nucleus_sampling false --min_length 120  --no_repeat_ngram_size 2 --test_from <path-to-saved-reranker-checkpoint>  --bce True 
 ```
 
-6. Train the summarization model based on the root folder
-## Training the summarization model
+## Training the summarization model based on the root folder
 ```bash
 export PYTHONPATH=.
 
 python train.py  --mode train --cuda  --data_dir <path-to-training-dataset-folder> --batch_size 2 --seed 666 --train_steps 80000 --save_checkpoint_steps 4000  --report_every 1  --visible_gpus 0 --gpu_ranks 0  --world_size 1 --accum_count 2 --dec_dropout 0.1 --enc_dropout 0.1  --model_path  ./trained_model/train_mx_vaeR1  --log_file ./log/train_source.txt  --inter_layers 6,7 --inter_heads 8 --hier --doc_max_timesteps 50 --use_bert false --prop 3 --sep_optim false --num_workers 5 --warmup_steps 8000 --lr 0.005 --enc_layers 6  --dec_layers 6 --use_nucleus_sampling false --label_smoothing 0.1  --candidate_type 0shot  --loss_kl 0.001  --loss_bow 0.01 --kl_annealing_steps 100000 --cand_num 3  --rank_type Rouge1  
 ```
 
-## Test
+## Test the summarization model
 ```bash
 export PYTHONPATH=.
 
