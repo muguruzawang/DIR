@@ -1,46 +1,32 @@
-# Disentangling Instructive Information from Ranked Multiple Candidates]{Disentangling Instructive Information from Ranked Multiple Candidates for Multi-Document Scientific Summarization
+# Disentangling Instructive Information from Ranked Multiple Candidates for Multi-Document Scientific Summarization
 This is the Pytorch implementation for [Disentangling Instructive Information from Ranked Multiple Candidates for Multi-Document Scientific Summarization], accepted by SIGIR 2024.
 
 <p align="center">
- <img src="image/modelframework.pdf" width="700"/>
+ <img src="image/modelframework.png" width="700"/>
 </p>
 
 ## Requirements
-* Python == 3.6.3
-* Pytorch == 1.5.0
-* transformers == 4.10.3
-* dgl-cu101 == 0.6.1
+* Python == 3.6.13
+* torch == 1.6.0
+* transformers == 4.18.0
 * pyrouge == 0.1.3
-* rake-nltk
 
 ## Usage
 1. Create folder `trained_model`, `result` , `log` under the root directory.
 
-2. Download Multi-Xscience Dataset from [here](https://github.com/yaolu/Multi-XScience).
+2. Download Multi-Xscience Dataset from [here](https://github.com/yaolu/Multi-XScience). Download TAD and TAS2 Dataset from [Paper](https://dl.acm.org/doi/abs/10.1145/3477495.3532065)
 
-3. Train a Dygie++ model for extracting entitie and relations from [here](https://github.com/dwadden/dygiepp).
+3. Generate summary candidates for each instance of the datasets
 
-4. Dataset Format and Dataset Preprocessing:
-    * 4.1 The format of the input files are shown in folder `example_data` , including `**.label.jsonl`, `**.ent_type_relation.jsonl`,`**.ent_promptsummary.jsonl`, `**.ent_importance_score.jsonl`, `**_summary.ent_importance_score.jsonl` and `output_**_processed_coref.json`.
-    
-    * 4.2 Extract entities and relations for Multi-Xscience using Dygie++. The output file is `output_**_processed_coref.json`.
-    Postprocess the output file `output_**_processed_coref.json` to the format of `**.ent_type_relation.jsonl`
-    
-    * 4.3 Using RAKE algorithm on `output_**_processed_coref.json` to calculate RAKE score for each entity candidate. 
-    ```
-    python script/keyphrase_extract.py
-    ```
-    
-    * 4.4 Create KGText samples using `**_summary.ent_importance_score.jsonl`.
-    ```
-    python script/add_prompt_info.py
-    ```
+4. Obtain the ROUGE ranking results of these summary candidates.
+
+5. Train a candidates reranker based on 
 
 ## Training a new model
 ```bash
 export PYTHONPATH=.
 
-CUDA_LAUNCH_BLOCKING=1 python train.py  --mode train --cuda  --data_dir <path-to-datasets-folder> --batch_size 4 --seed 666 --train_steps 100000 --save_checkpoint_steps 4000  --report_every 1  --visible_gpus 0 --gpu_ranks 0  --world_size 1 --accum_count 2 --dec_dropout 0.1 --enc_dropout 0.1  --model_path  <path-to-trained-model-folder>  --log_file <path-to-log-file>  --inter_layers 6,7 --inter_heads 8 --hier --doc_max_timesteps 50 --prop 3 --min_length1 100 --no_repeat_ngram_size1 3 --sep_optim false --num_workers 5 --lr_dec 0.05 --warmup_steps 8000 --lr 0.005 --enc_layers 6  --dec_layers 6 --use_nucleus_sampling false --label_smoothing 0.1 --entloss_weight 1 
+python train.py  --mode train --cuda  --data_dir <path-to-training-dataset-folder> --batch_size 2 --seed 666 --train_steps 80000 --save_checkpoint_steps 4000  --report_every 1  --visible_gpus 0 --gpu_ranks 0  --world_size 1 --accum_count 2 --dec_dropout 0.1 --enc_dropout 0.1  --model_path  ./trained_model/train_mx_vaeR1  --log_file ./log/train_source.txt  --inter_layers 6,7 --inter_heads 8 --hier --doc_max_timesteps 50 --use_bert false --prop 3 --sep_optim false --num_workers 5 --warmup_steps 8000 --lr 0.005 --enc_layers 6  --dec_layers 6 --use_nucleus_sampling false --label_smoothing 0.1  --candidate_type 0shot  --loss_kl 0.001  --loss_bow 0.01 --kl_annealing_steps 100000 --cand_num 3  --rank_type Rouge1  
 ```
 
 ## Test
