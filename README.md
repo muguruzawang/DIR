@@ -20,9 +20,23 @@ This is the Pytorch implementation for [Disentangling Instructive Information fr
 
 4. Obtain the ROUGE ranking results of these summary candidates.
 
-5. Train a candidates reranker based on 
+5. Train a candidates reranker based on the folder `candidate_reranker`
+## Training the reranker model
+```bash
+export PYTHONPATH=.
 
-## Training a new model
+python train.py  --mode train --cuda  --data_dir <path-to-training-dataset-folder>  --batch_size 1 --seed 666 --train_steps 26000 --warmup_steps 4000 --save_checkpoint_steps 2000  --report_every 1  --visible_gpus 0 --gpu_ranks 0  --world_size 1 --accum_count 8 --dec_dropout 0.2 --enc_dropout 0.1  --model_path  ./trained_model/train_promptctr  --log_file ./log/train_source.txt  --inter_layers 6,7 --inter_heads 6 --dec_hidden_size 768 --hier --doc_max_timesteps 50 --use_bert true --prop 3  --num_workers 5 --lr 0.001 --enc_layers 6  --dec_layers 6 --use_nucleus_sampling false --label_smoothing 0.1 
+```
+
+## Predict on the test set
+```bash
+export PYTHONPATH=.
+
+python train.py  --mode test --cuda  --data_dir <path-to-test-dataset-folder> --batch_size 8 --valid_batch_size 8 --seed 666   --visible_gpus 0 --gpu_ranks 0 --dec_dropout 0.2 --enc_dropout 0.1  --lr 0.2 --label_smoothing 0.1  --log_file ./log/log_full_test_wordlevel_copy001.txt  --inter_layers 6,7 --inter_heads 6 --dec_hidden_size 768 --doc_max_timesteps 50 --use_bert true --report_rouge --alpha 0.4 --max_length 200 --result_path ./resultmx/prompt_ctr_ --prop 3 --test_all false --sep_optim true --use_nucleus_sampling false --min_length 120  --no_repeat_ngram_size 2 --test_from <path-to-saved-reranker-checkpoint>  --bce True 
+```
+
+6. Train the summarization model based on the root folder
+## Training the summarization model
 ```bash
 export PYTHONPATH=.
 
@@ -33,7 +47,7 @@ python train.py  --mode train --cuda  --data_dir <path-to-training-dataset-folde
 ```bash
 export PYTHONPATH=.
 
-python train.py  --mode test --cuda  --data_dir <path-to-datasets-folder> --batch_size 8 --valid_batch_size 8 --seed 666   --visible_gpus 0 --gpu_ranks 0 --dec_dropout 0.1 --enc_dropout 0.1  --lr 0.2 --label_smoothing 0.0  --log_file <path-to-log-file>  --inter_layers 6,7 --inter_heads 8 --doc_max_timesteps 50 --use_bert false --report_rouge --alpha 0.4 --max_length 400 --result_path <path-to-result-folder> --prop 3 --test_all false --sep_optim false   --use_bert false  --use_nucleus_sampling false --min_length1 100 --min_length2 110 --no_repeat_ngram_size1 3 --no_repeat_ngram_size2 3 --test_from <path-to-saved-model-checkpoint>
+python train.py  --mode test --cuda  --data_dir <path-to-test-dataset-folder> --batch_size 8 --valid_batch_size 8 --seed 666   --visible_gpus 0 --gpu_ranks 0 --dec_dropout 0.1 --enc_dropout 0.1  --lr 0.2 --label_smoothing 0.0  --log_file ./log/log_full_test_wordlevel_copy001.txt  --inter_layers 6,7 --inter_heads 8 --doc_max_timesteps 50 --use_bert false --report_rouge --alpha 0.4 --max_length 200 --result_path ./result/model_ --prop 3 --test_all false --sep_optim false   --use_bert false  --use_nucleus_sampling false --min_length 100  --no_repeat_ngram_size 2 --test_from <path-to-saved-summarization-model-checkpoint> --predrank_path  <path-to-predicted-test-ranking-result>  --cand_num 3  --enc_layers  6  --dec_layers 6  --rank_type Piratio  --use_z2 true
 ```
 
 ## References
